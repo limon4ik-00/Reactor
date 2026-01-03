@@ -2553,7 +2553,7 @@ local function mainLoop()
     initChatBox()
     
     for i = 1, (flux_network and 19 or 21) do
-        consoleLines[i] = ""
+        consoleLines[i] = { text = "", textBase = "", color = colors.textclr, count = 1 }
     end 
     last_me_address = addr
     drawStatic()
