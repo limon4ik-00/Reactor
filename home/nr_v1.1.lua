@@ -775,20 +775,11 @@ local function drawWidgets()
             buffer.drawText(x + 21, y + 10,  colors.bg, brailleChar(brail_status[3]))
             buffer.drawText(x,  y + 10,  colors.bg, brailleChar(brail_status[4]))
 
-            if reactor_work[i] then
-                -- Получаем актуальную оставшуюся прочность стержней (не считаем как "секунды")
-                local newDurability = getDepletionTime(i)
-                reactor_depletionTime[i] = math.max(0, newDurability or 0)
-            else
-                reactor_depletionTime[i] = 0
-            end
-
             buffer.drawText(x + 6,  y + 1,  colors.textclr, "Реактор #" .. i)
             buffer.drawText(x + 4,  y + 3,  colors.textclr, "Нагрев: " .. (temperature[i] or "-") .. "°C")
             buffer.drawText(x + 4,  y + 4,  colors.textclr, formatRFwidgets(reactor_rf[i]))
             buffer.drawText(x + 4,  y + 5,  colors.textclr, "Тип: " .. (reactor_type[i] or "-"))
             buffer.drawText(x + 4,  y + 6,  colors.textclr, "Запущен: " .. (reactor_work[i] and "Да" or "Нет"))
-            buffer.drawText(x + 4,  y + 7,  colors.textclr, "Прочность: " .. tostring(reactor_depletionTime[i] or 0))
             animatedButton(1, x + 6, y + 8, (reactor_work[i] and "Отключить" or "Включить"), nil, nil, 10, nil, nil, (reactor_work[i] and 0xfd3232 or 0x2beb1a))
             if reactor_type[i] == "Fluid" then
                 drawVerticalProgressBar(x + 1, y + 1, 9, reactor_getcoolant[i], reactor_maxcoolant[i], 0x0044FF, 0x00C8FF, colors.bg2)
@@ -1183,7 +1174,6 @@ local function drawTimeInfo()
         buffer.drawText(123 + i, fl_y1+1, colors.bg2, brailleChar(brail_console[2]))
     end
     buffer.drawText(124, fl_y1, colors.textclr, "МЭ: Обн. ч/з..")
-    buffer.drawText(141, fl_y1, colors.textclr, "Прочность стержней:")
     buffer.drawText(139, fl_y1, colors.bg2, brailleChar(brail_cherta[1]))
     buffer.drawText(139, fl_y1+1, colors.bg2, brailleChar(brail_cherta[2]))
     buffer.drawText(139, fl_y1+2, colors.bg2, brailleChar(brail_cherta[1]))
@@ -1191,9 +1181,6 @@ local function drawTimeInfo()
     drawDigit(125, fl_y1+2, brail_time, 0xaa4b2e)
     -- ---------------------------------------------------------------------------
     buffer.drawRectangle(127, fl_y1+2, 12, 2, colors.bg, 0, " ")
-    
-    -- Показ оставшейся прочности стержней вместо предыдущего времени обновления
-    drawNumberWithText(134, fl_y1+2, (depletionTime or 0), 2, colors.textclr, "Sec", colors.textclr)
     
     buffer.drawRectangle(140, fl_y1+2, 18, 2, colors.bg, 0, " ")
 
@@ -2752,13 +2739,7 @@ local function mainLoop()
                 end
             end
 
-            if any_reactor_on then
-                -- Берём минимальную оставшуюся прочность стержней среди всех реакторов
-                local newDurability = getDepletionTime()
-                depletionTime = math.max(0, newDurability or 0)
-            else
-                depletionTime = 0
-            end
+            depletionTime = 0
             if second >= 60 then
                 minute = minute + 1
                 checkFluid()
