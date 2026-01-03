@@ -56,7 +56,7 @@ Reactor Control позволяет:
    Введите ```install``` и подтвердите нажатием **Enter дважды**. Компьютер перезагрузится.
 
 2. Загрузите и установите программу Reactor Control:  
-   Введите ```wget -fq https://raw.githubusercontent.com/limon4ik-00/Reactor/refs/heads/main/installer/installer.lua?token=GHSAT0AAAAAADSKRVCGW4BFDBB3R7KTXZPS2KYOJNA ins && ins```
+   Введите ```wget -fq https://raw.githubusercontent.com/limon4ik-00/Reactor/refs/heads/main/installer/installer.lua ins && ins```
 
 3. Настройте config.lua:  
    - Впишите никнеймы пользователей в массив users, например:  
@@ -103,3 +103,4 @@ Reactor Control позволяет:
 - Либо оставляйте комментарии на форуме.
 
 Буду рад вашим отзывам!
+
