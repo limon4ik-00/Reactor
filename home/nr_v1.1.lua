@@ -603,54 +603,88 @@ local function secondsToHMS(totalSeconds)
 end
 
 local function getDepletionTime(num)
-    if reactors == 0 then
-        return 0
-    end
+    if reactors == 0 then return 0 end
 
     local minReactorTime = math.huge
-    
+
     if #reactor_depletionTime == 0 then
-        for i = 1, reactors do
-            reactor_depletionTime[i] = 0
-        end
+        for i = 1, reactors do reactor_depletionTime[i] = 0 end
     end
 
-    for i = 1, reactors do
-        local rods = safeCallwg(reactors_proxy[i], "getAllFuelRodsStatus", nil)
+    local methodsToTry = {"getAllFuelRodsStatus", "getFuelRodsStatus", "getAllFuelRods", "getFuelRods", "getRodsStatus"}
+
+    local startIdx, endIdx = 1, reactors
+    if type(num) == "number" and num >= 1 and num <= reactors then
+        startIdx, endIdx = num, num
+    end
+
+    for i = startIdx, endIdx do
+        local proxy = reactors_proxy[i]
+        local rods = nil
+        for _, m in ipairs(methodsToTry) do
+            rods = safeCall(proxy, m, nil)
+            if type(rods) == "table" and next(rods) then break end
+            rods = nil
+        end
+
         local isFluid = reactor_type[i] == "Fluid"
         local reactorTime = 0
 
-        if type(rods) == "table" and #rods > 0 then
+        if type(rods) == "table" then
             local maxRod = 0
-            for _, rod in ipairs(rods) do
-                if type(rod) == "table" and rod[6] then
-                    -- Добавлена проверка на число
-                    local fuelLeft = tonumber(rod[6]) or 0
-                    if isFluid then
-                        fuelLeft = fuelLeft / 2
-                    end
-                    if fuelLeft > maxRod then
-                        maxRod = fuelLeft
+            for _, rod in pairs(rods) do
+                -- поддерживаем разные форматы: число, массив или таблица с полями
+                local candidate = 0
+                if type(rod) == "number" then
+                    candidate = rod
+                elseif type(rod) == "string" then
+                    candidate = tonumber(rod) or 0
+                elseif type(rod) == "table" then
+                    -- первичный индекс 6 как в оригинале
+                    if tonumber(rod[6]) then
+                        candidate = tonumber(rod[6])
+                    else
+                        -- ищем любое числовое поле
+                        for k, v in pairs(rod) do
+                            if type(v) == "number" then
+                                candidate = v
+                                break
+                            elseif type(v) == "string" then
+                                local n = tonumber(v)
+                                if n then
+                                    candidate = n
+                                    break
+                                end
+                            end
+                        end
+                        -- также проверяем часто используемые ключи
+                        if candidate == 0 then
+                            local keys = {"durability","remaining","fuel","time","ticks"}
+                            for _, key in ipairs(keys) do
+                                if tonumber(rod[key]) then
+                                    candidate = tonumber(rod[key])
+                                    break
+                                end
+                            end
+                        end
                     end
                 end
+
+                local fuelLeft = tonumber(candidate) or 0
+                if isFluid then fuelLeft = fuelLeft / 2 end
+                if fuelLeft > maxRod then maxRod = fuelLeft end
             end
 
             reactorTime = maxRod
             reactor_depletionTime[i] = reactorTime
-            
-            if reactorTime > 0 and reactorTime < minReactorTime then
-                minReactorTime = reactorTime
-            end
+            if reactorTime > 0 and reactorTime < minReactorTime then minReactorTime = reactorTime end
         else
             reactor_depletionTime[i] = 0
         end
     end
 
-    if minReactorTime == math.huge then
-        return 0
-    else
-        return math.floor(minReactorTime or 0)
-    end
+    if minReactorTime == math.huge then return 0 end
+    return math.floor(minReactorTime or 0)
 end
 
 local function drawVerticalProgressBar(x, y, height, value, maxValue, colorBottom, colorTop, colorInactive)
