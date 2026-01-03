@@ -2,7 +2,7 @@
 -- Author: P1KaChU337
 
 ------------------------------------ config ------------------------------------
-local REPOSITORY  = "https://raw.githubusercontent.com/P1KaChU337/Reactor-Control-for-OpenComputers/refs/heads/main/"
+local REPOSITORY  = "https://raw.githubusercontent.com/limon4ik-00/Reactor/refs/heads/main/"
 
 local filesToDownload = {
   {url = REPOSITORY.."/lib/advancedLua.lua",                path="/lib/advancedLua.lua"},
@@ -89,7 +89,7 @@ local function drawChrome()
   frame(X,Y,W,H)
   -- title
   text(X+2, Y, "┤ "..appTitle.." ├", COL_TEXT)
-  text(X+W-20, Y, "[by P1KaChU337]", COL_DIM)
+  text(X+W-20, Y, "[by lim0n4ik_00]", COL_DIM)
   -- логотип
   text(X+W-15, Y+1, "☢ REACTOR", COL_WARN)
   -- секции

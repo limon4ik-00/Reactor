@@ -742,16 +742,9 @@ local function drawWidgets()
             buffer.drawText(x,  y + 10,  colors.bg, brailleChar(brail_status[4]))
 
             if reactor_work[i] then
-                if (reactor_depletionTime[i] or 0) <= 0 then
-                    local newTime = getDepletionTime(i)
-                    if newTime > 0 then
-                        reactor_depletionTime[i] = newTime
-                    else
-                        reactor_depletionTime[i] = 0
-                    end
-                else
-                    reactor_depletionTime[i] = reactor_depletionTime[i] - 1
-                end
+                -- Получаем актуальную оставшуюся прочность стержней (не считаем как "секунды")
+                local newDurability = getDepletionTime(i)
+                reactor_depletionTime[i] = math.max(0, newDurability or 0)
             else
                 reactor_depletionTime[i] = 0
             end
@@ -1156,7 +1149,7 @@ local function drawTimeInfo()
         buffer.drawText(123 + i, fl_y1+1, colors.bg2, brailleChar(brail_console[2]))
     end
     buffer.drawText(124, fl_y1, colors.textclr, "МЭ: Обн. ч/з..")
-    buffer.drawText(141, fl_y1, colors.textclr, "Время работы:")
+    buffer.drawText(141, fl_y1, colors.textclr, "Прочность стержней:")
     buffer.drawText(139, fl_y1, colors.bg2, brailleChar(brail_cherta[1]))
     buffer.drawText(139, fl_y1+1, colors.bg2, brailleChar(brail_cherta[2]))
     buffer.drawText(139, fl_y1+2, colors.bg2, brailleChar(brail_cherta[1]))
@@ -1165,7 +1158,8 @@ local function drawTimeInfo()
     -- ---------------------------------------------------------------------------
     buffer.drawRectangle(127, fl_y1+2, 12, 2, colors.bg, 0, " ")
     
-    drawNumberWithText(134, fl_y1+2, (me_network and (60 - second) or 0), 2, colors.textclr, "Sec", colors.textclr)
+    -- Показ оставшейся прочности стержней вместо предыдущего времени обновления
+    drawNumberWithText(134, fl_y1+2, (depletionTime or 0), 2, colors.textclr, "Sec", colors.textclr)
     
     buffer.drawRectangle(140, fl_y1+2, 18, 2, colors.bg, 0, " ")
 
@@ -1487,6 +1481,7 @@ end
 local function drawDynamic()
     buffer.drawRectangle(123, 3, 35, (flux_network and 22 or 24), colors.bg, 0, " ")
     for i = 0, 35 - 1 do
+
         buffer.drawText(123 + i, 2, colors.bg, brailleChar(brail_console[1]))
     end
     for i = 0, 35 - 1 do
@@ -2067,7 +2062,6 @@ local function handleChatCommand(nick, msg, args)
                 start()
             end
         end
-
     elseif msg:match("^@stop") then
         local num = tonumber(args:match("^(%d+)"))
         if isChatBox then
@@ -2084,7 +2078,6 @@ local function handleChatCommand(nick, msg, args)
                 stop()
             end
         end
-
     elseif msg:match("^@setporog") then
         local newPorog = tonumber(args:match("^(%d+)"))
         if newPorog then
@@ -2726,16 +2719,9 @@ local function mainLoop()
             end
 
             if any_reactor_on then
-                if depletionTime <= 0 then
-                    local newTime = getDepletionTime()
-                    if newTime > 0 then
-                        depletionTime = newTime
-                    else
-                        depletionTime = 0
-                    end
-                else
-                    depletionTime = depletionTime - 1
-                end
+                -- Берём минимальную оставшуюся прочность стержней среди всех реакторов
+                local newDurability = getDepletionTime()
+                depletionTime = math.max(0, newDurability or 0)
             else
                 depletionTime = 0
             end
